@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCT Fixation Targets — All</title>
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: auto;
+    font-family: monospace;
+    padding: 40px 20px;
+  }
+
+  .container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 60px;
+    max-width: 1800px;
+  }
+
+  .fixation-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  canvas {
+    border-radius: 4px;
+  }
+
+  lottie-player {
+    background: transparent;
+  }
+
+  .label {
+    color: rgba(180, 160, 200, 0.5);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .attribution {
+    color: rgba(140, 140, 160, 0.4);
+    font-size: 9px;
+    text-align: center;
+    margin-top: 5px;
+  }
+
+  .attribution a {
+    color: rgba(140, 160, 200, 0.5);
+    text-decoration: none;
+  }
+
+  .attribution a:hover {
+    color: rgba(180, 200, 220, 0.7);
+  }
+
+  h1 {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(180, 160, 200, 0.4);
+    font-size: 14px;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    font-weight: normal;
+  }
+</style>
+</head>
+<body>
+
+<h1>OCT Fixation Targets</h1>
+
+<div class="container">
+  <div class="fixation-item">
+    <canvas id="flower" width="400" height="400"></canvas>
+    <div class="label">Blooming Flower</div>
+  </div>
+  
+  <div class="fixation-item">
+    <canvas id="galaxy" width="400" height="400"></canvas>
+    <div class="label">Spiral Galaxy</div>
+  </div>
+
+  <div class="fixation-item">
+    <canvas id="snowflake" width="400" height="400"></canvas>
+    <div class="label">Snowflake</div>
+  </div>
+  
+  <div class="fixation-item">
+    <lottie-player 
+      src="Bento Blocks _ Sync Card.json" 
+      background="transparent" 
+      speed="1" 
+      style="width: 400px; height: 400px;" 
+      loop 
+      autoplay>
+    </lottie-player>
+    <div class="label">Basketball</div>
+  </div>
+  
+  <div class="fixation-item">
+    <canvas id="globe" width="400" height="400"></canvas>
+    <div class="label">Globe</div>
+  </div>
+
+  <div class="fixation-item">
+    <lottie-player 
+      src="confetti.json" 
+      background="transparent" 
+      speed="1" 
+      style="width: 400px; height: 400px;" 
+      loop 
+      autoplay>
+    </lottie-player>
+    <div class="label">Confetti</div>
+    <div class="attribution">
+      <a href="https://iconscout.com/lottie-animations/confetti" target="_blank">Confetti</a> by 
+      <a href="https://iconscout.com/contributors/aswathy-j" target="_blank">Aswathy J</a> on 
+      <a href="https://iconscout.com" target="_blank">IconScout</a>
+    </div>
+  </div>
+
+  <div class="fixation-item">
+    <lottie-player 
+      src="confetti (1).json" 
+      background="transparent" 
+      speed="1" 
+      style="width: 400px; height: 400px;" 
+      loop 
+      autoplay>
+    </lottie-player>
+    <div class="label">Confetti 2</div>
+    <div class="attribution">
+      <a href="https://iconscout.com/lottie-animations/confetti" target="_blank">Confetti</a> by 
+      <a href="https://iconscout.com/contributors/aswathy-j" target="_blank">Aswathy J</a> on 
+      <a href="https://iconscout.com" target="_blank">IconScout</a>
+    </div>
+  </div>
+
+  <div class="fixation-item">
+    <lottie-player 
+      src="Slack logo.json" 
+      background="transparent" 
+      speed="1" 
+      style="width: 400px; height: 400px;" 
+      loop 
+      autoplay>
+    </lottie-player>
+    <div class="label">Slack Logo</div>
+  </div>
+
+  <div class="fixation-item">
+    <lottie-player 
+      src="Photos App Icon.json" 
+      background="transparent" 
+      speed="1" 
+      style="width: 400px; height: 400px;" 
+      loop 
+      autoplay>
+    </lottie-player>
+    <div class="label">Photos App Icon</div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// FLOWER ANIMATION
+// ============================================================================
+(function() {
+  const canvas = document.getElementById('flower');
+  const ctx = canvas.getContext('2d');
+  const W = 128, H = 128;
+
+  const off = document.createElement('canvas');
+  off.width = W; off.height = H;
+  const oc = off.getContext('2d');
+
+  const BG = [10, 8, 15];
+  const PETAL_OUTER = [210, 80, 140];
+  const PETAL_MID = [240, 130, 170];
+  const PETAL_INNER = [255, 200, 210];
+  const PETAL_VEIN = [180, 50, 110];
+  const PETAL2_OUTER = [230, 100, 60];
+  const PETAL2_MID = [250, 160, 100];
+  const PETAL2_INNER = [255, 220, 180];
+  const STAMEN_OUTER = [255, 200, 40];
+  const STAMEN_INNER = [255, 240, 120];
+  const STAMEN_TIP = [255, 255, 200];
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function lerpC(ca, cb, t) {
+    return [lerp(ca[0],cb[0],t), lerp(ca[1],cb[1],t), lerp(ca[2],cb[2],t)];
+  }
+  function clamp(v,mn,mx){ return Math.max(mn,Math.min(mx,v)); }
+
+  function setPixel(img, x, y, r, g, b, a=255) {
+    x = Math.round(x); y = Math.round(y);
+    if (x < 0 || x >= W || y < 0 || y >= H) return;
+    const i = (y * W + x) * 4;
+    const fa = a / 255;
+    img.data[i]   = clamp(img.data[i]   * (1-fa) + r * fa, 0, 255);
+    img.data[i+1] = clamp(img.data[i+1] * (1-fa) + g * fa, 0, 255);
+    img.data[i+2] = clamp(img.data[i+2] * (1-fa) + b * fa, 0, 255);
+    img.data[i+3] = 255;
+  }
+
+  function addPixel(img, x, y, r, g, b, a=255) {
+    x = Math.round(x); y = Math.round(y);
+    if (x < 0 || x >= W || y < 0 || y >= H) return;
+    const i = (y * W + x) * 4;
+    img.data[i]   = clamp(img.data[i]   + r * (a/255), 0, 255);
+    img.data[i+1] = clamp(img.data[i+1] + g * (a/255), 0, 255);
+    img.data[i+2] = clamp(img.data[i+2] + b * (a/255), 0, 255);
+    img.data[i+3] = 255;
+  }
+
+  function drawPetal(img, cx, cy, angle, length, width, bloom, colTip, colBase, alpha=255) {
+    if (bloom <= 0) return;
+    const L = length * bloom;
+    const W2 = width * bloom;
+
+    for (let li = 0; li <= L; li++) {
+      const t = li / L;
+      const hw = W2 * Math.sin(t * Math.PI) * (t < 0.4 ? t/0.4 : 1);
+      const px = cx + Math.cos(angle) * li;
+      const py = cy + Math.sin(angle) * li;
+      const col = lerpC(colBase, colTip, t);
+
+      for (let wi = -hw; wi <= hw; wi += 0.5) {
+        const perpX = px + Math.cos(angle + Math.PI/2) * wi;
+        const perpY = py + Math.sin(angle + Math.PI/2) * wi;
+        const edgeFade = 1 - Math.abs(wi) / (hw + 0.001);
+        const a2 = Math.round(alpha * edgeFade * edgeFade);
+        setPixel(img, perpX, perpY, col[0], col[1], col[2], a2);
+      }
+
+      if (t > 0.1 && t < 0.9) {
+        const va = Math.round(alpha * 0.18 * Math.sin(t * Math.PI));
+        setPixel(img, px, py, PETAL_VEIN[0], PETAL_VEIN[1], PETAL_VEIN[2], va);
+      }
+    }
+  }
+
+  function drawStamen(img, cx, cy, angle, length, bloom, alpha=255) {
+    if (bloom <= 0) return;
+    const L = length * bloom;
+    for (let li = 0; li <= L; li++) {
+      const t = li / L;
+      const px = cx + Math.cos(angle) * li;
+      const py = cy + Math.sin(angle) * li;
+      const col = t < 0.8 ? lerpC(STAMEN_OUTER, STAMEN_INNER, t) : STAMEN_TIP;
+      const a2 = t > 0.85 ? alpha : Math.round(alpha * 0.7);
+      setPixel(img, px, py, col[0], col[1], col[2], a2);
+      if (t > 0.85) {
+        setPixel(img, px+1, py, col[0], col[1], col[2], Math.round(a2*0.5));
+        setPixel(img, px, py+1, col[0], col[1], col[2], Math.round(a2*0.5));
+      }
+    }
+  }
+
+  const BLOOM_TIME = 3000, HOLD_OPEN = 1500, CLOSE_TIME = 2000, HOLD_CLOSED = 600;
+  const CYCLE = BLOOM_TIME + HOLD_OPEN + CLOSE_TIME + HOLD_CLOSED;
+  const ROT_PERIOD = 20000;
+
+  function getBloom(ts) {
+    const t = ts % CYCLE;
+    if (t < BLOOM_TIME) {
+      const x = t / BLOOM_TIME;
+      const ease = x < 0.5 ? 2*x*x : 1-Math.pow(-2*x+2,2)/2;
+      return 0.5 + ease * 0.5;
+    } else if (t < BLOOM_TIME + HOLD_OPEN) {
+      return 1;
+    } else if (t < BLOOM_TIME + HOLD_OPEN + CLOSE_TIME) {
+      const x = (t - BLOOM_TIME - HOLD_OPEN) / CLOSE_TIME;
+      const ease = x < 0.5 ? 2*x*x : 1-Math.pow(-2*x+2,2)/2;
+      return 1 - ease * 0.5;
+    } else {
+      return 0.5;
+    }
+  }
+
+  function draw(ts) {
+    const bloom = getBloom(ts);
+    const rotation = (ts / ROT_PERIOD) * Math.PI * 2;
+
+    const img = oc.createImageData(W, H);
+
+    for (let i = 0; i < W * H * 4; i += 4) {
+      img.data[i] = BG[0]; img.data[i+1] = BG[1]; img.data[i+2] = BG[2]; img.data[i+3] = 255;
+    }
+
+    const cx = W / 2, cy = H / 2;
+
+    for (let i = 0; i < 6; i++) {
+      const angle = rotation + (i / 6) * Math.PI * 2;
+      const petalBloom = clamp(bloom * 1.15 - (i % 2) * 0.1, 0, 1);
+      drawPetal(img, cx, cy, angle, 34, 11, petalBloom, PETAL_OUTER, PETAL_INNER, 240);
+    }
+
+    for (let i = 0; i < 6; i++) {
+      const angle = rotation + (i / 6) * Math.PI * 2 + Math.PI / 6;
+      const petalBloom = clamp(bloom * 1.1 - 0.05, 0, 1);
+      drawPetal(img, cx, cy, angle, 22, 8, petalBloom, PETAL2_OUTER, PETAL2_INNER, 220);
+    }
+
+    for (let i = 0; i < 12; i++) {
+      const angle = rotation + (i / 12) * Math.PI * 2;
+      const sBloom = clamp(bloom * 1.3 - 0.2, 0, 1);
+      drawStamen(img, cx, cy, angle, 12, sBloom, 230);
+    }
+
+    const coreBloom = clamp(bloom * 1.4 - 0.3, 0, 1);
+    const coreR = 5 * coreBloom;
+    for (let dy = -coreR - 2; dy <= coreR + 2; dy++) {
+      for (let dx = -coreR - 2; dx <= coreR + 2; dx++) {
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (d > coreR + 1.5) continue;
+        const t = clamp(d / (coreR + 0.5), 0, 1);
+        const col = lerpC(STAMEN_TIP, STAMEN_OUTER, t);
+        const a = Math.round((1 - clamp((d - coreR) / 1.5, 0, 1)) * 255 * coreBloom);
+        addPixel(img, cx+dx, cy+dy, col[0], col[1], col[2], a);
+      }
+    }
+
+    const glowR = 42 * bloom;
+    if (glowR > 0) {
+      for (let dy = -glowR; dy <= glowR; dy++) {
+        for (let dx = -glowR; dx <= glowR; dx++) {
+          const d = Math.sqrt(dx*dx + dy*dy);
+          if (d > glowR) continue;
+          const strength = Math.pow(1 - d/glowR, 3) * 0.18 * bloom;
+          addPixel(img, cx+dx, cy+dy, 200, 80, 140, Math.round(strength * 255));
+        }
+      }
+    }
+
+    setPixel(img, cx, cy, 255, 255, 255, 255);
+    setPixel(img, cx+1, cy, 255, 255, 255, 180);
+    setPixel(img, cx-1, cy, 255, 255, 255, 180);
+    setPixel(img, cx, cy+1, 255, 255, 255, 180);
+    setPixel(img, cx, cy-1, 255, 255, 255, 180);
+
+    oc.putImageData(img, 0, 0);
+    ctx.clearRect(0, 0, 400, 400);
+    ctx.drawImage(off, 0, 0, 400, 400);
+
+    requestAnimationFrame(draw);
+  }
+
+  requestAnimationFrame(draw);
+})();
+
+// ============================================================================
+// GALAXY ANIMATION
+// ============================================================================
+(function() {
+  const canvas = document.getElementById('galaxy');
+  const ctx = canvas.getContext('2d');
+  const W = 128, H = 128;
+
+  const off = document.createElement('canvas');
+  off.width = W; off.height = H;
+  const oc = off.getContext('2d');
+
+  const PALETTE = {
+    bg: [2, 4, 12],
+    core: [255, 240, 180],
+    coreGlow: [255, 200, 100],
+    arm1a: [80, 160, 255],
+    arm2a: [160, 100, 255]
+  };
+
+  const ARM_PARTICLES = [];
+  const NUM_ARMS = 3, a = 1.6, b = 0.3, MAX_THETA = Math.PI * 3.2;
+
+  for (let arm = 0; arm < NUM_ARMS; arm++) {
+    const armOffset = (arm / NUM_ARMS) * Math.PI * 2;
+    for (let i = 0; i < 500; i++) {
+      const frac = i / 500;
+      const theta = frac * MAX_THETA;
+      const r = a * Math.exp(b * theta);
+      const armWidth = 1.0 + r * 0.18;
+      const spread = (Math.random() - 0.5) * armWidth * 2;
+      const perpAngle = theta + armOffset + Math.PI / 2;
+      const bx = Math.cos(theta + armOffset) * r + Math.cos(perpAngle) * spread;
+      const by = Math.sin(theta + armOffset) * r + Math.sin(perpAngle) * spread;
+      const brightness = Math.max(0.05, (1 - frac * 0.8)) * (0.4 + Math.random() * 0.6);
+      const isBrightStar = Math.random() < 0.06;
+      ARM_PARTICLES.push({ bx, by, frac, arm, brightness, size: isBrightStar ? 2 : 1, type: 'arm' });
+    }
+  }
+
+  for (let i = 0; i < 200; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const r = 2 + Math.random() * 38;
+    const bx = Math.cos(theta) * r, by = Math.sin(theta) * r;
+    ARM_PARTICLES.push({ bx, by, frac: r / 40, arm: 0, brightness: 0.05 + Math.random() * 0.12, size: 1, type: 'haze' });
+  }
+
+  for (let i = 0; i < 300; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const r = Math.abs((Math.random() + Math.random() + Math.random()) / 3 - 0.5) * 14;
+    const bx = Math.cos(theta) * r, by = Math.sin(theta) * r;
+    const warmth = 1 - r / 14;
+    ARM_PARTICLES.push({ bx, by, frac: 0, arm: -1, brightness: (0.3 + Math.random() * 0.7) * (1 - r / 16), size: r < 4 && Math.random() < 0.15 ? 2 : 1, type: 'bulge', warmth });
+  }
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function setPixel(imgData, x, y, r, g, b, a=255) {
+    x = Math.round(x); y = Math.round(y);
+    if (x < 0 || x >= W || y < 0 || y >= H) return;
+    const i = (y * W + x) * 4;
+    imgData.data[i]   = Math.min(255, imgData.data[i]   + r * (a/255));
+    imgData.data[i+1] = Math.min(255, imgData.data[i+1] + g * (a/255));
+    imgData.data[i+2] = Math.min(255, imgData.data[i+2] + b * (a/255));
+    imgData.data[i+3] = 255;
+  }
+
+  const CORE_R = 5;
+  let angle = 0;
+
+  function draw(ts) {
+    angle = (ts / 6000) * Math.PI * 2;
+    const imgData = oc.createImageData(W, H);
+
+    for (let i = 0; i < W * H * 4; i += 4) {
+      imgData.data[i] = PALETTE.bg[0]; imgData.data[i+1] = PALETTE.bg[1]; imgData.data[i+2] = PALETTE.bg[2]; imgData.data[i+3] = 255;
+    }
+
+    const cx = W / 2, cy = H / 2;
+
+    for (const p of ARM_PARTICLES) {
+      const cosA = Math.cos(angle), sinA = Math.sin(angle);
+      const rx = p.bx * cosA - p.by * sinA, ry = p.bx * sinA + p.by * cosA;
+      const px = cx + rx, py = cy + ry;
+
+      let col;
+      if (p.type === 'bulge') {
+        col = [lerp(255, 255, p.warmth), lerp(180, 230, p.warmth), lerp(80, 150, p.warmth)];
+      } else if (p.type === 'haze') {
+        col = [20, 50, 110];
+      } else {
+        if (p.arm === 0) {
+          col = [lerp(PALETTE.coreGlow[0], PALETTE.arm1a[0], p.frac), lerp(PALETTE.coreGlow[1], PALETTE.arm1a[1], p.frac), lerp(PALETTE.coreGlow[2], PALETTE.arm1a[2], p.frac)];
+        } else if (p.arm === 1) {
+          col = [lerp(PALETTE.coreGlow[0], PALETTE.arm2a[0], p.frac), lerp(PALETTE.coreGlow[1], PALETTE.arm2a[1], p.frac), lerp(PALETTE.coreGlow[2], PALETTE.arm2a[2], p.frac)];
+        } else {
+          col = [lerp(PALETTE.coreGlow[0], 40, p.frac), lerp(PALETTE.coreGlow[1], 200, p.frac), lerp(PALETTE.coreGlow[2], 180, p.frac)];
+        }
+      }
+
+      const alpha = Math.round(Math.max(0, Math.min(1, p.brightness)) * 220);
+      if (p.size === 2) {
+        setPixel(imgData, px, py, col[0], col[1], col[2], alpha);
+        setPixel(imgData, px+1, py, col[0], col[1], col[2], Math.round(alpha*0.5));
+        setPixel(imgData, px, py+1, col[0], col[1], col[2], Math.round(alpha*0.5));
+      } else {
+        setPixel(imgData, px, py, col[0], col[1], col[2], alpha);
+      }
+    }
+
+    for (let dy = -CORE_R * 2; dy <= CORE_R * 2; dy++) {
+      for (let dx = -CORE_R * 2; dx <= CORE_R * 2; dx++) {
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (d > CORE_R * 2) continue;
+        const strength = Math.pow(1 - d / (CORE_R * 2), 2.2);
+        const col = d < CORE_R ? PALETTE.core : PALETTE.coreGlow;
+        setPixel(imgData, cx + dx, cy + dy, col[0], col[1], col[2], Math.round(strength * 255));
+      }
+    }
+
+    setPixel(imgData, cx, cy, 255, 255, 255, 255);
+    setPixel(imgData, cx+1, cy, 255, 255, 255, 200);
+    setPixel(imgData, cx-1, cy, 255, 255, 255, 200);
+    setPixel(imgData, cx, cy+1, 255, 255, 255, 200);
+    setPixel(imgData, cx, cy-1, 255, 255, 255, 200);
+
+    oc.putImageData(imgData, 0, 0);
+    ctx.clearRect(0, 0, 400, 400);
+    ctx.drawImage(off, 0, 0, 400, 400);
+
+    requestAnimationFrame(draw);
+  }
+
+  requestAnimationFrame(draw);
+})();
+
+// ============================================================================
+// SNOWFLAKE ANIMATION
+// ============================================================================
+(function() {
+  const canvas = document.getElementById('snowflake');
+  const ctx = canvas.getContext('2d');
+  const W = 128, H = 128;
+
+  const off = document.createElement('canvas');
+  off.width = W; off.height = H;
+  const oc = off.getContext('2d');
+
+  const PALETTE = {
+    bg: [2, 4, 12],
+    core: [255, 255, 255],
+    coreGlow: [220, 240, 255],
+    ice1: [180, 220, 255],
+    ice2: [140, 200, 255],
+    ice3: [100, 180, 240],
+    crystal: [200, 230, 255]
+  };
+
+  const FLAKE_PARTICLES = [];
+  const NUM_ARMS = 6;
+  const ARM_LENGTH = 50;
+  const CORE_SIZE = 3;
+
+  // Main arms with branches
+  for (let arm = 0; arm < NUM_ARMS; arm++) {
+    const armAngle = (arm / NUM_ARMS) * Math.PI * 2;
+    
+    for (let i = 0; i < 80; i++) {
+      const frac = i / 80;
+      const r = frac * ARM_LENGTH;
+      const bx = Math.cos(armAngle) * r;
+      const by = Math.sin(armAngle) * r;
+      const brightness = 0.6 + (1 - frac) * 0.4;
+      const isBright = Math.random() < 0.15;
+      
+      FLAKE_PARTICLES.push({ bx, by, frac, arm, brightness, size: isBright ? 2 : 1, type: 'spine' });
+    }
+    
+    const BRANCH_COUNT = 8;
+    for (let b = 0; b < BRANCH_COUNT; b++) {
+      const branchFrac = (b + 1) / (BRANCH_COUNT + 1);
+      const branchOriginR = branchFrac * ARM_LENGTH;
+      const branchAngle = armAngle + Math.PI / 6;
+      const branchAngle2 = armAngle - Math.PI / 6;
+      
+      for (let j = 0; j < 15; j++) {
+        const f = j / 15;
+        const branchLen = (1 - branchFrac) * ARM_LENGTH * 0.4;
+        const bx = Math.cos(armAngle) * branchOriginR + Math.cos(branchAngle) * f * branchLen;
+        const by = Math.sin(armAngle) * branchOriginR + Math.sin(branchAngle) * f * branchLen;
+        const brightness = 0.5 + (1 - f) * 0.4 * (1 - branchFrac * 0.3);
+        
+        FLAKE_PARTICLES.push({ bx, by, frac: branchFrac + f * 0.1, arm, brightness, size: 1, type: 'branch' });
+      }
+      
+      for (let j = 0; j < 15; j++) {
+        const f = j / 15;
+        const branchLen = (1 - branchFrac) * ARM_LENGTH * 0.4;
+        const bx = Math.cos(armAngle) * branchOriginR + Math.cos(branchAngle2) * f * branchLen;
+        const by = Math.sin(armAngle) * branchOriginR + Math.sin(branchAngle2) * f * branchLen;
+        const brightness = 0.5 + (1 - f) * 0.4 * (1 - branchFrac * 0.3);
+        
+        FLAKE_PARTICLES.push({ bx, by, frac: branchFrac + f * 0.1, arm, brightness, size: 1, type: 'branch' });
+      }
+    }
+    
+    for (let i = 0; i < 30; i++) {
+      const frac = Math.random();
+      const r = frac * ARM_LENGTH;
+      const spread = (Math.random() - 0.5) * 4;
+      const perpAngle = armAngle + Math.PI / 2;
+      const bx = Math.cos(armAngle) * r + Math.cos(perpAngle) * spread;
+      const by = Math.sin(armAngle) * r + Math.sin(perpAngle) * spread;
+      
+      FLAKE_PARTICLES.push({ bx, by, frac, arm, brightness: 0.3 + Math.random() * 0.5, size: 1, type: 'crystal' });
+    }
+  }
+
+  const HEXAGON_R = 8;
+  for (let i = 0; i < 6; i++) {
+    const angle1 = (i / 6) * Math.PI * 2;
+    const angle2 = ((i + 1) / 6) * Math.PI * 2;
+    
+    for (let j = 0; j < 15; j++) {
+      const t = j / 15;
+      const x1 = Math.cos(angle1) * HEXAGON_R;
+      const y1 = Math.sin(angle1) * HEXAGON_R;
+      const x2 = Math.cos(angle2) * HEXAGON_R;
+      const y2 = Math.sin(angle2) * HEXAGON_R;
+      const bx = x1 + (x2 - x1) * t;
+      const by = y1 + (y2 - y1) * t;
+      
+      FLAKE_PARTICLES.push({ bx, by, frac: 0, arm: -1, brightness: 0.9, size: 1, type: 'hexagon' });
+    }
+  }
+
+  for (let i = 0; i < 150; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const r = Math.random() * CORE_SIZE;
+    const bx = Math.cos(theta) * r;
+    const by = Math.sin(theta) * r;
+    
+    FLAKE_PARTICLES.push({ bx, by, frac: 0, arm: -1, brightness: 0.8 + Math.random() * 0.2, size: 1, type: 'core' });
+  }
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function setPixel(imgData, x, y, r, g, b, a=255) {
+    x = Math.round(x); y = Math.round(y);
+    if (x < 0 || x >= W || y < 0 || y >= H) return;
+    const i = (y * W + x) * 4;
+    imgData.data[i]   = Math.min(255, imgData.data[i]   + r * (a/255));
+    imgData.data[i+1] = Math.min(255, imgData.data[i+1] + g * (a/255));
+    imgData.data[i+2] = Math.min(255, imgData.data[i+2] + b * (a/255));
+    imgData.data[i+3] = 255;
+  }
+
+  let angle = 0;
+
+  function draw(ts) {
+    angle = (ts / 6000) * Math.PI * 2;
+    const imgData = oc.createImageData(W, H);
+
+    for (let i = 0; i < W * H * 4; i += 4) {
+      imgData.data[i] = PALETTE.bg[0]; imgData.data[i+1] = PALETTE.bg[1]; imgData.data[i+2] = PALETTE.bg[2]; imgData.data[i+3] = 255;
+    }
+
+    const cx = W / 2, cy = H / 2;
+
+    for (const p of FLAKE_PARTICLES) {
+      const cosA = Math.cos(angle), sinA = Math.sin(angle);
+      const rx = p.bx * cosA - p.by * sinA, ry = p.bx * sinA + p.by * cosA;
+      const px = cx + rx, py = cy + ry;
+
+      let col;
+      if (p.type === 'core' || p.type === 'hexagon') {
+        col = PALETTE.core;
+      } else if (p.type === 'spine') {
+        col = [lerp(PALETTE.coreGlow[0], PALETTE.ice1[0], p.frac), lerp(PALETTE.coreGlow[1], PALETTE.ice1[1], p.frac), lerp(PALETTE.coreGlow[2], PALETTE.ice1[2], p.frac)];
+      } else if (p.type === 'branch') {
+        col = [lerp(PALETTE.ice2[0], PALETTE.ice3[0], p.frac), lerp(PALETTE.ice2[1], PALETTE.ice3[1], p.frac), lerp(PALETTE.ice2[2], PALETTE.ice3[2], p.frac)];
+      } else {
+        col = PALETTE.crystal;
+      }
+
+      const alpha = Math.round(Math.max(0, Math.min(1, p.brightness)) * 220);
+      if (p.size === 2) {
+        setPixel(imgData, px, py, col[0], col[1], col[2], alpha);
+        setPixel(imgData, px+1, py, col[0], col[1], col[2], Math.round(alpha*0.5));
+        setPixel(imgData, px, py+1, col[0], col[1], col[2], Math.round(alpha*0.5));
+      } else {
+        setPixel(imgData, px, py, col[0], col[1], col[2], alpha);
+      }
+    }
+
+    const GLOW_R = 10;
+    for (let dy = -GLOW_R; dy <= GLOW_R; dy++) {
+      for (let dx = -GLOW_R; dx <= GLOW_R; dx++) {
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (d > GLOW_R) continue;
+        const strength = Math.pow(1 - d / GLOW_R, 2.5);
+        const col = d < CORE_SIZE ? PALETTE.core : PALETTE.coreGlow;
+        setPixel(imgData, cx + dx, cy + dy, col[0], col[1], col[2], Math.round(strength * 255));
+      }
+    }
+
+    setPixel(imgData, cx, cy, 255, 255, 255, 255);
+    setPixel(imgData, cx+1, cy, 255, 255, 255, 200);
+    setPixel(imgData, cx-1, cy, 255, 255, 255, 200);
+    setPixel(imgData, cx, cy+1, 255, 255, 255, 200);
+    setPixel(imgData, cx, cy-1, 255, 255, 255, 200);
+
+    oc.putImageData(imgData, 0, 0);
+    ctx.clearRect(0, 0, 400, 400);
+    ctx.drawImage(off, 0, 0, 400, 400);
+
+    requestAnimationFrame(draw);
+  }
+
+  requestAnimationFrame(draw);
+})();
+
+// ============================================================================
+// GLOBE ANIMATION
+// ============================================================================
+(function() {
+  const canvas = document.getElementById('globe');
+  const ctx = canvas.getContext('2d');
+  const W = 400, H = 400;
+  const cx = W / 2, cy = H / 2, GLOBE_R = 160;
+  const ROT_PERIOD = 6000, BREATH_PERIOD = 5000;
+
+  function draw(ts) {
+    const breathPhase = (ts % BREATH_PERIOD) / BREATH_PERIOD;
+    const breathWave = -Math.cos(breathPhase * Math.PI * 2);
+    const speedMultiplier = 1.0 + breathWave * 0.15;
+    const rotation = (ts / ROT_PERIOD) * speedMultiplier * Math.PI * 2;
+
+    ctx.fillStyle = '#0a0a0f';
+    ctx.fillRect(0, 0, W, H);
+
+    const gradient = ctx.createRadialGradient(cx - GLOBE_R * 0.35, cy - GLOBE_R * 0.35, GLOBE_R * 0.1, cx, cy, GLOBE_R);
+    gradient.addColorStop(0, '#6bb6ff');
+    gradient.addColorStop(0.5, '#4a9ddd');
+    gradient.addColorStop(0.85, '#2870b0');
+    gradient.addColorStop(1, '#1a4d7a');
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(cx, cy, GLOBE_R, 0, Math.PI * 2);
+    ctx.fill();
+
+    const glowGradient = ctx.createRadialGradient(cx, cy, GLOBE_R, cx, cy, GLOBE_R + 40);
+    glowGradient.addColorStop(0, 'rgba(74, 157, 221, 0.25)');
+    glowGradient.addColorStop(1, 'rgba(74, 157, 221, 0)');
+    ctx.fillStyle = glowGradient;
+    ctx.beginPath();
+    ctx.arc(cx, cy, GLOBE_R + 40, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.beginPath();
+    ctx.arc(0, 0, GLOBE_R, 0, Math.PI * 2);
+    ctx.clip();
+
+    const NUM_MERIDIANS = 12;
+    for (let i = 0; i < NUM_MERIDIANS; i++) {
+      const angle = (i / NUM_MERIDIANS) * Math.PI * 2 + rotation;
+      const ellipseWidth = Math.abs(Math.cos(angle)) * GLOBE_R;
+      const isFront = Math.cos(angle) > 0;
+      const opacity = isFront ? 0.5 : 0.2;
+      ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, ellipseWidth, GLOBE_R, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    ctx.strokeStyle = 'rgba(26, 77, 122, 0.6)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, GLOBE_R, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.fillRect(cx - 8, cy - 0.5, 16, 1);
+    ctx.fillRect(cx - 0.5, cy - 8, 1, 16);
+
+    requestAnimationFrame(draw);
+  }
+
+  requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>

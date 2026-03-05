@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCT Fixation Target — Spiral Galaxy</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+    font-family: monospace;
+  }
+
+  .wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    animation: breathe 5s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%   { transform: scale(0.78); }
+    50%  { transform: scale(1.0);  }
+    100% { transform: scale(0.78); }
+  }
+
+  /* subtle scanline overlay for that retro feel */
+  .scanlines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0,0,0,0.08) 3px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    border-radius: 50%;
+  }
+
+  .label {
+    position: absolute;
+    bottom: -36px;
+    color: rgba(100, 160, 220, 0.4);
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <canvas id="starfield" width="256" height="256" style="width:512px;height:512px;position:absolute;"></canvas>
+  <canvas id="galaxy" width="256" height="256" style="width:512px;height:512px;"></canvas>
+  <div class="scanlines"></div>
+  <div class="label">fixation target</div>
+</div>
+
+<script>
+const canvas = document.getElementById('galaxy');
+const ctx = canvas.getContext('2d');
+const W = 128, H = 128;
+
+// ---- Static starfield canvas ----
+const starCanvas = document.getElementById('starfield');
+const sctx = starCanvas.getContext('2d');
+
+// Offscreen pixel canvas (128x128 upscaled to 256x256)
+const off = document.createElement('canvas');
+off.width = W; off.height = H;
+const oc = off.getContext('2d');
+
+// ---- Palette (muted deep-space blues/teals/purples + warm core) ----
+const PALETTE = {
+  bg:       [2,   4,  12],
+  core:     [255, 240, 180],
+  coreGlow: [255, 200, 100],
+  arm1a:    [80,  160, 255],
+  arm1b:    [40,  100, 200],
+  arm2a:    [160, 100, 255],
+  arm2b:    [100,  60, 180],
+  dust:     [30,   60, 120],
+  star:     [200, 220, 255],
+  starWarm: [255, 240, 200],
+};
+
+// ---- Star field (static background) ----
+const stars = [];
+for (let i = 0; i < 600; i++) {
+  stars.push({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    b: 0.08 + Math.random() * 0.9,
+    warm: Math.random() < 0.2,
+    size: Math.random() < 0.06 ? 2 : 1
+  });
+}
+
+// ---- Logarithmic spiral galaxy ----
+// r = a * e^(b * theta)  — this is what gives real galaxies their shape
+// We use 2 main arms + faint inter-arm haze + a dense central bulge
+
+const ARM_PARTICLES = [];
+
+const NUM_ARMS = 3;
+const a = 1.6;      // initial radius scale
+const b = 0.3;      // tightness (lower = more tightly wound)
+const MAX_THETA = Math.PI * 3.2; // how far each arm wraps (~1.6 turns)
+
+// --- Arm particles ---
+for (let arm = 0; arm < NUM_ARMS; arm++) {
+  const armOffset = (arm / NUM_ARMS) * Math.PI * 2;
+  const N = 500;
+  for (let i = 0; i < N; i++) {
+    const frac = i / N;
+    const theta = frac * MAX_THETA;
+    const r = a * Math.exp(b * theta);
+
+    // arm width tapers outward — wider in the middle, thinner at tips
+    const armWidth = 1.0 + r * 0.18;
+    const spread = (Math.random() - 0.5) * armWidth * 2;
+    // perpendicular spread
+    const perpAngle = theta + armOffset + Math.PI / 2;
+    const bx = Math.cos(theta + armOffset) * r + Math.cos(perpAngle) * spread;
+    const by = Math.sin(theta + armOffset) * r + Math.sin(perpAngle) * spread;
+
+    // brightness peaks near core, fades at tips
+    const brightness = Math.max(0.05, (1 - frac * 0.8)) * (0.4 + Math.random() * 0.6);
+    // bright hot stars scattered along arms
+    const isBrightStar = Math.random() < 0.06;
+
+    ARM_PARTICLES.push({
+      bx, by, frac, arm,
+      brightness,
+      size: isBrightStar ? 2 : 1,
+      type: 'arm'
+    });
+  }
+}
+
+// --- Inter-arm haze (diffuse disk) ---
+for (let i = 0; i < 200; i++) {
+  const theta = Math.random() * Math.PI * 2;
+  const r = 2 + Math.random() * 38;
+  const bx = Math.cos(theta) * r;
+  const by = Math.sin(theta) * r;
+  ARM_PARTICLES.push({
+    bx, by,
+    frac: r / 40,
+    arm: 0,
+    brightness: 0.05 + Math.random() * 0.12,
+    size: 1,
+    type: 'haze'
+  });
+}
+
+// --- Central bulge — dense round core of older stars ---
+for (let i = 0; i < 300; i++) {
+  const theta = Math.random() * Math.PI * 2;
+  // clustered tightly around center with gaussian-like falloff
+  const r = Math.abs((Math.random() + Math.random() + Math.random()) / 3 - 0.5) * 14;
+  const bx = Math.cos(theta) * r;
+  const by = Math.sin(theta) * r;
+  const warmth = 1 - r / 14; // warmer (yellower) near center
+  ARM_PARTICLES.push({
+    bx, by,
+    frac: 0,
+    arm: -1, // bulge
+    brightness: (0.3 + Math.random() * 0.7) * (1 - r / 16),
+    size: r < 4 && Math.random() < 0.15 ? 2 : 1,
+    type: 'bulge',
+    warmth
+  });
+}
+
+// ---- Draw stars once on static canvas ----
+(function drawStars() {
+  const starOff = document.createElement('canvas');
+  starOff.width = W; starOff.height = H;
+  const soc = starOff.getContext('2d');
+  const imgData = soc.createImageData(W, H);
+  // transparent bg
+  for (let i = 0; i < W * H * 4; i += 4) {
+    imgData.data[i+3] = 0;
+  }
+  for (const s of stars) {
+    const c = s.warm ? PALETTE.starWarm : PALETTE.star;
+    const a = Math.round(s.b * 200);
+    const x = Math.round(s.x), y = Math.round(s.y);
+    if (x < 0 || x >= W || y < 0 || y >= H) continue;
+    const idx = (y * W + x) * 4;
+    imgData.data[idx]   = c[0];
+    imgData.data[idx+1] = c[1];
+    imgData.data[idx+2] = c[2];
+    imgData.data[idx+3] = a;
+    // slightly larger bright stars
+    if (s.size === 2 && x+1 < W) {
+      const idx2 = (y * W + (x+1)) * 4;
+      imgData.data[idx2]   = c[0];
+      imgData.data[idx2+1] = c[1];
+      imgData.data[idx2+2] = c[2];
+      imgData.data[idx2+3] = Math.round(a * 0.5);
+    }
+  }
+  soc.putImageData(imgData, 0, 0);
+  sctx.drawImage(starOff, 0, 0, 256, 256);
+})();
+const CORE_R = 5;
+
+// ---- Render ----
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function setPixel(imgData, x, y, r, g, b, a=255) {
+  x = Math.round(x); y = Math.round(y);
+  if (x < 0 || x >= W || y < 0 || y >= H) return;
+  const i = (y * W + x) * 4;
+  // additive blend for glow
+  imgData.data[i]   = Math.min(255, imgData.data[i]   + r * (a/255));
+  imgData.data[i+1] = Math.min(255, imgData.data[i+1] + g * (a/255));
+  imgData.data[i+2] = Math.min(255, imgData.data[i+2] + b * (a/255));
+  imgData.data[i+3] = 255;
+}
+
+let angle = 0;
+
+function draw(ts) {
+  angle = (ts / 6000) * Math.PI * 2; // full rotation every 6s
+
+  const imgData = oc.createImageData(W, H);
+
+  // Fill background transparent (stars are on separate canvas)
+  for (let i = 0; i < W * H * 4; i += 4) {
+    imgData.data[i]   = PALETTE.bg[0];
+    imgData.data[i+1] = PALETTE.bg[1];
+    imgData.data[i+2] = PALETTE.bg[2];
+    imgData.data[i+3] = 255;
+  }
+
+  const cx = W / 2, cy = H / 2;
+
+  // Spiral arms, bulge, haze
+  for (const p of ARM_PARTICLES) {
+    const cosA = Math.cos(angle), sinA = Math.sin(angle);
+    const rx = p.bx * cosA - p.by * sinA;
+    const ry = p.bx * sinA + p.by * cosA;
+    const px = cx + rx;
+    const py = cy + ry;
+
+    let col;
+    if (p.type === 'bulge') {
+      // warm yellow-orange bulge stars
+      col = [
+        lerp(255, 255, p.warmth),
+        lerp(180, 230, p.warmth),
+        lerp(80,  150, p.warmth),
+      ];
+    } else if (p.type === 'haze') {
+      col = [20, 50, 110];
+    } else {
+      // arm — blue arm 0, purple arm 1, teal arm 2, warm near center
+      if (p.arm === 0) {
+        col = [
+          lerp(PALETTE.coreGlow[0], PALETTE.arm1a[0], p.frac),
+          lerp(PALETTE.coreGlow[1], PALETTE.arm1a[1], p.frac),
+          lerp(PALETTE.coreGlow[2], PALETTE.arm1a[2], p.frac),
+        ];
+      } else if (p.arm === 1) {
+        col = [
+          lerp(PALETTE.coreGlow[0], PALETTE.arm2a[0], p.frac),
+          lerp(PALETTE.coreGlow[1], PALETTE.arm2a[1], p.frac),
+          lerp(PALETTE.coreGlow[2], PALETTE.arm2a[2], p.frac),
+        ];
+      } else {
+        // arm 2 — teal/cyan
+        col = [
+          lerp(PALETTE.coreGlow[0], 40,  p.frac),
+          lerp(PALETTE.coreGlow[1], 200, p.frac),
+          lerp(PALETTE.coreGlow[2], 180, p.frac),
+        ];
+      }
+    }
+
+    const alpha = Math.round(Math.max(0, Math.min(1, p.brightness)) * 220);
+    if (p.size === 2) {
+      setPixel(imgData, px,   py,   col[0], col[1], col[2], alpha);
+      setPixel(imgData, px+1, py,   col[0], col[1], col[2], Math.round(alpha*0.5));
+      setPixel(imgData, px,   py+1, col[0], col[1], col[2], Math.round(alpha*0.5));
+    } else {
+      setPixel(imgData, px, py, col[0], col[1], col[2], alpha);
+    }
+  }
+
+  // Core glow (soft gradient)
+  for (let dy = -CORE_R * 2; dy <= CORE_R * 2; dy++) {
+    for (let dx = -CORE_R * 2; dx <= CORE_R * 2; dx++) {
+      const d = Math.sqrt(dx*dx + dy*dy);
+      if (d > CORE_R * 2) continue;
+      const strength = Math.pow(1 - d / (CORE_R * 2), 2.2);
+      const col = d < CORE_R
+        ? PALETTE.core
+        : PALETTE.coreGlow;
+      setPixel(imgData, cx + dx, cy + dy,
+        col[0], col[1], col[2],
+        Math.round(strength * 255));
+    }
+  }
+
+  // Hard center pixel — the fixation dot
+  setPixel(imgData, cx, cy, 255, 255, 255, 255);
+  setPixel(imgData, cx+1, cy, 255, 255, 255, 200);
+  setPixel(imgData, cx-1, cy, 255, 255, 255, 200);
+  setPixel(imgData, cx, cy+1, 255, 255, 255, 200);
+  setPixel(imgData, cx, cy-1, 255, 255, 255, 200);
+
+  oc.putImageData(imgData, 0, 0);
+
+  // Scale up to display canvas
+  ctx.clearRect(0, 0, 256, 256);
+  ctx.drawImage(off, 0, 0, 256, 256);
+
+  requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

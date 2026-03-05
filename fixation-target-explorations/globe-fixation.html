@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCT Fixation Target — Globe</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .label {
+    position: absolute;
+    bottom: -36px;
+    color: rgba(100, 160, 220, 0.35);
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-family: monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <canvas id="globe" width="512" height="512"></canvas>
+  <div class="label">fixation target</div>
+</div>
+
+<script>
+const canvas = document.getElementById('globe');
+const ctx = canvas.getContext('2d');
+const W = canvas.width;
+const H = canvas.height;
+const cx = W / 2;
+const cy = H / 2;
+const GLOBE_R = 200;
+
+// ---- Animation state ----
+const ROT_PERIOD = 6000; // base rotation period
+const BREATH_PERIOD = 5000; // breathing cycle every 5s
+
+function draw(ts) {
+  // Create breathing pattern for rotation speed: slow → fast → slow
+  // Use negative cosine to start slow, peak at fast, return to slow
+  const breathPhase = (ts % BREATH_PERIOD) / BREATH_PERIOD;
+  const breathWave = -Math.cos(breathPhase * Math.PI * 2);
+  
+  // Speed varies subtly from 0.85x (slow) to 1.15x (fast)
+  const speedMultiplier = 1.0 + breathWave * 0.15;
+  
+  // Integrate speed over time for smooth rotation
+  const rotation = (ts / ROT_PERIOD) * speedMultiplier * Math.PI * 2;
+
+  // Clear canvas
+  ctx.fillStyle = '#0a0a0f';
+  ctx.fillRect(0, 0, W, H);
+
+  // ---- Draw globe sphere with gradient ----
+  const gradient = ctx.createRadialGradient(
+    cx - GLOBE_R * 0.35, cy - GLOBE_R * 0.35, GLOBE_R * 0.1,
+    cx, cy, GLOBE_R
+  );
+  
+  gradient.addColorStop(0, '#6bb6ff');    // bright highlight
+  gradient.addColorStop(0.5, '#4a9ddd');  // mid-tone blue
+  gradient.addColorStop(0.85, '#2870b0'); // darker blue
+  gradient.addColorStop(1, '#1a4d7a');    // shadow edge
+  
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(cx, cy, GLOBE_R, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ---- Ambient glow ----
+  const glowGradient = ctx.createRadialGradient(cx, cy, GLOBE_R, cx, cy, GLOBE_R + 50);
+  glowGradient.addColorStop(0, 'rgba(74, 157, 221, 0.25)');
+  glowGradient.addColorStop(1, 'rgba(74, 157, 221, 0)');
+  
+  ctx.fillStyle = glowGradient;
+  ctx.beginPath();
+  ctx.arc(cx, cy, GLOBE_R + 50, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Clip to sphere for grid lines
+  ctx.beginPath();
+  ctx.arc(0, 0, GLOBE_R, 0, Math.PI * 2);
+  ctx.clip();
+
+  // ---- Longitude lines (vertical meridians) ----
+  // All meridians pass through fixed poles at top and bottom
+  const NUM_MERIDIANS = 12;
+  for (let i = 0; i < NUM_MERIDIANS; i++) {
+    const angle = (i / NUM_MERIDIANS) * Math.PI * 2 + rotation;
+    
+    // Width of ellipse based on longitude position (how far rotated from viewer)
+    // When facing viewer: widest (full circle projection)
+    // When on the side: narrowest (thin edge-on view)
+    const ellipseWidth = Math.abs(Math.cos(angle)) * GLOBE_R;
+    
+    // Fade lines on the back side of the sphere
+    const isFront = Math.cos(angle) > 0;
+    const opacity = isFront ? 0.5 : 0.2;
+    
+    ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+    ctx.lineWidth = 3.5;
+    
+    // Draw vertical ellipse centered at origin, all passing through (0, ±GLOBE_R)
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ellipseWidth, GLOBE_R, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+
+  // ---- Outer rim/edge of globe for definition ----
+  ctx.strokeStyle = 'rgba(26, 77, 122, 0.6)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(cx, cy, GLOBE_R, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // ---- Center fixation dot (white) ----
+  ctx.fillStyle = 'white';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Subtle cross for precise fixation
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.fillRect(cx - 10, cy - 0.5, 20, 1);
+  ctx.fillRect(cx - 0.5, cy - 10, 1, 20);
+
+  requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
