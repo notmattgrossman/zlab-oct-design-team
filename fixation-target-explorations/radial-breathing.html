@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radial Breathing Animation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #000000;
+            --line-color: #ffffff;
+            --glow-color: rgba(255, 255, 255, 0.4);
+            --accent: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: transparent;
+            pointer-events: none;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .toolbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 24px;
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            overflow-x: auto;
+            z-index: 1000;
+        }
+
+        .toolbar::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .toolbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .toolbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 140px;
+        }
+
+        .control-group.compact {
+            min-width: auto;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 9px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .control-value {
+            color: var(--line-color);
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        input[type="range"] {
+            width: 140px;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.15);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--line-color);
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--glow-color);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--line-color);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 8px var(--glow-color);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .control-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--line-color);
+        }
+
+        .control-btn:active {
+            transform: scale(0.92);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+        }
+
+        .control-btn:disabled:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .count-display {
+            min-width: 32px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--line-color);
+            font-weight: bold;
+        }
+
+        .pattern-buttons {
+            display: flex;
+            gap: 4px;
+        }
+
+        .pattern-btn {
+            padding: 6px 10px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .pattern-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--line-color);
+            color: var(--line-color);
+        }
+
+        .pattern-btn.active {
+            background: var(--line-color);
+            border-color: var(--line-color);
+            color: var(--bg-dark);
+            font-weight: bold;
+        }
+
+        .toggle-btn {
+            padding: 6px 10px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--line-color);
+            color: var(--line-color);
+        }
+
+        .toggle-btn.active {
+            background: var(--line-color);
+            border-color: var(--line-color);
+            color: var(--bg-dark);
+            font-weight: bold;
+        }
+
+        .divider {
+            width: 1px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .preset-section {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            position: relative;
+        }
+
+        .preset-dropdown {
+            position: relative;
+        }
+
+        .preset-toggle-btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .preset-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--line-color);
+            color: var(--line-color);
+        }
+
+        .preset-panel {
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            margin-bottom: 12px;
+            background: rgba(0, 0, 0, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 16px;
+            width: 320px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .preset-panel.visible {
+            display: block;
+        }
+
+        .preset-input-group {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .preset-input {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            outline: none;
+        }
+
+        .preset-input:focus {
+            border-color: var(--line-color);
+            box-shadow: 0 0 8px var(--glow-color);
+        }
+
+        .preset-save-btn {
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid var(--line-color);
+            color: var(--line-color);
+            font-size: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .preset-save-btn:hover {
+            background: var(--line-color);
+            color: var(--bg-dark);
+        }
+
+        .preset-list {
+            margin-bottom: 12px;
+        }
+
+        .preset-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            margin-bottom: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .preset-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--line-color);
+        }
+
+        .preset-item-name {
+            flex: 1;
+        }
+
+        .preset-delete-btn {
+            padding: 3px 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 7px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-transform: uppercase;
+        }
+
+        .preset-delete-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--bg-dark);
+            border-color: white;
+        }
+
+        .preset-csv-buttons {
+            display: flex;
+            gap: 4px;
+        }
+
+        .preset-csv-btn {
+            flex: 1;
+            padding: 6px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+        }
+
+        .preset-csv-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--line-color);
+            color: var(--line-color);
+        }
+
+        .preset-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .preset-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .preset-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .preset-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .preset-header {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="toolbar">
+        <div class="control-group">
+            <div class="control-label">
+                <span>Period</span>
+                <span class="control-value" id="periodValue">4.2s</span>
+            </div>
+            <input type="range" id="periodSlider" min="0.5" max="10" step="0.1" value="4.2">
+        </div>
+
+        <div class="control-group compact">
+            <div class="control-label">
+                <span>Lines</span>
+            </div>
+            <div class="button-group">
+                <button class="control-btn" id="decreaseLines">−</button>
+                <div class="count-display" id="lineCount">8</div>
+                <button class="control-btn" id="increaseLines">+</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="control-label">
+                <span>Thickness</span>
+                <span class="control-value" id="thicknessValue">6px</span>
+            </div>
+            <input type="range" id="thicknessSlider" min="1" max="20" step="0.5" value="6">
+        </div>
+
+        <div class="control-group">
+            <div class="control-label">
+                <span>Depth</span>
+                <span class="control-value" id="depthValue">78px</span>
+            </div>
+            <input type="range" id="depthSlider" min="10" max="180" step="5" value="78">
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="control-group">
+            <div class="control-label">
+                <span>Rotation</span>
+                <span class="control-value" id="rotationValue">0°/s</span>
+            </div>
+            <input type="range" id="rotationSlider" min="-50" max="50" step="5" value="0">
+        </div>
+
+        <div class="control-group">
+            <div class="control-label">
+                <span>Rot. Flux</span>
+                <span class="control-value" id="rotationFluxValue">100%</span>
+            </div>
+            <input type="range" id="rotationFluxSlider" min="0" max="200" step="10" value="100">
+        </div>
+
+        <div class="control-group compact">
+            <div class="control-label">
+                <span>Rot. Mode</span>
+            </div>
+            <button class="toggle-btn" id="rotationFlipBtn">Fast Expand</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="control-group compact">
+            <div class="control-label">
+                <span>Pattern</span>
+            </div>
+            <div class="pattern-buttons">
+                <button class="pattern-btn active" data-pattern="sine">Sin</button>
+                <button class="pattern-btn" data-pattern="pulse">Pls</button>
+                <button class="pattern-btn" data-pattern="easeInOut">Eas</button>
+                <button class="pattern-btn" data-pattern="sharp">Shp</button>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+        
+        <div class="preset-section">
+            <div class="preset-dropdown">
+                <button class="preset-toggle-btn" id="presetToggleBtn">⚙ Presets</button>
+                <div class="preset-panel" id="presetPanel">
+                    <div class="preset-header">Save Preset</div>
+                    <div class="preset-input-group">
+                        <input type="text" class="preset-input" id="presetNameInput" placeholder="Name...">
+                        <button class="preset-save-btn" id="savePresetBtn">Save</button>
+                    </div>
+                    <div class="preset-header" style="margin-top: 16px;">Saved Presets</div>
+                    <div class="preset-list" id="presetList"></div>
+                    <div class="preset-csv-buttons">
+                        <button class="preset-csv-btn" id="exportCsvBtn">Export</button>
+                        <button class="preset-csv-btn" id="importCsvBtn">Import</button>
+                    </div>
+                </div>
+            </div>
+            <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const centerX = () => canvas.width / 2;
+        const centerY = () => canvas.height / 2;
+        let numLines = 8;
+        const outerRadius = 240;
+        const maxStartRadius = 200;
+
+        let breathingPeriod = 4.2;
+        let lineThickness = 6;
+        let breathingDepth = 78;
+        let rotationSpeed = 0;
+        let rotationFlux = 1.0;
+        let currentPattern = 'sine';
+        let rotationFlipped = false;
+
+        const periodSlider = document.getElementById('periodSlider');
+        const periodValue = document.getElementById('periodValue');
+        const increaseLines = document.getElementById('increaseLines');
+        const decreaseLines = document.getElementById('decreaseLines');
+        const lineCount = document.getElementById('lineCount');
+        const thicknessSlider = document.getElementById('thicknessSlider');
+        const thicknessValue = document.getElementById('thicknessValue');
+        const depthSlider = document.getElementById('depthSlider');
+        const depthValue = document.getElementById('depthValue');
+        const rotationSlider = document.getElementById('rotationSlider');
+        const rotationValue = document.getElementById('rotationValue');
+        const rotationFluxSlider = document.getElementById('rotationFluxSlider');
+        const rotationFluxValue = document.getElementById('rotationFluxValue');
+        const patternButtons = document.querySelectorAll('.pattern-btn');
+        const rotationFlipBtn = document.getElementById('rotationFlipBtn');
+
+        periodSlider.addEventListener('input', (e) => {
+            breathingPeriod = parseFloat(e.target.value);
+            periodValue.textContent = breathingPeriod.toFixed(1) + 's';
+        });
+
+        thicknessSlider.addEventListener('input', (e) => {
+            lineThickness = parseFloat(e.target.value);
+            thicknessValue.textContent = lineThickness.toFixed(1) + 'px';
+        });
+
+        depthSlider.addEventListener('input', (e) => {
+            breathingDepth = parseFloat(e.target.value);
+            depthValue.textContent = breathingDepth.toFixed(0) + 'px';
+        });
+
+        rotationSlider.addEventListener('input', (e) => {
+            rotationSpeed = parseFloat(e.target.value);
+            rotationValue.textContent = rotationSpeed.toFixed(0) + '°/s';
+        });
+
+        rotationFluxSlider.addEventListener('input', (e) => {
+            rotationFlux = parseFloat(e.target.value) / 100;
+            rotationFluxValue.textContent = Math.round(parseFloat(e.target.value)) + '%';
+        });
+
+        patternButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                patternButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentPattern = btn.dataset.pattern;
+            });
+        });
+
+        rotationFlipBtn.addEventListener('click', () => {
+            rotationFlipped = !rotationFlipped;
+            rotationFlipBtn.classList.toggle('active');
+            rotationFlipBtn.textContent = rotationFlipped ? 'Fast Contract' : 'Fast Expand';
+        });
+
+        increaseLines.addEventListener('click', () => {
+            numLines++;
+            lineCount.textContent = numLines;
+            updateButtonStates();
+        });
+
+        decreaseLines.addEventListener('click', () => {
+            if (numLines > 4) {
+                numLines--;
+                lineCount.textContent = numLines;
+                updateButtonStates();
+            }
+        });
+
+        function updateButtonStates() {
+            decreaseLines.disabled = numLines <= 4;
+        }
+
+        updateButtonStates();
+
+        const savePresetBtn = document.getElementById('savePresetBtn');
+        const presetNameInput = document.getElementById('presetNameInput');
+        const presetList = document.getElementById('presetList');
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
+        const importCsvBtn = document.getElementById('importCsvBtn');
+        const csvFileInput = document.getElementById('csvFileInput');
+        const presetToggleBtn = document.getElementById('presetToggleBtn');
+        const presetPanel = document.getElementById('presetPanel');
+
+        presetToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            presetPanel.classList.toggle('visible');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!presetPanel.contains(e.target) && e.target !== presetToggleBtn) {
+                presetPanel.classList.remove('visible');
+            }
+        });
+
+        function getCurrentSettings() {
+            return {
+                breathingPeriod,
+                numLines,
+                lineThickness,
+                breathingDepth,
+                rotationSpeed,
+                rotationFlux: rotationFlux * 100,
+                currentPattern,
+                rotationFlipped
+            };
+        }
+
+        function loadSettings(settings) {
+            breathingPeriod = settings.breathingPeriod;
+            periodSlider.value = breathingPeriod;
+            periodValue.textContent = breathingPeriod.toFixed(1) + 's';
+
+            numLines = settings.numLines;
+            lineCount.textContent = numLines;
+            updateButtonStates();
+
+            lineThickness = settings.lineThickness;
+            thicknessSlider.value = lineThickness;
+            thicknessValue.textContent = lineThickness.toFixed(1) + 'px';
+
+            breathingDepth = settings.breathingDepth;
+            depthSlider.value = breathingDepth;
+            depthValue.textContent = breathingDepth.toFixed(0) + 'px';
+
+            rotationSpeed = settings.rotationSpeed;
+            rotationSlider.value = rotationSpeed;
+            rotationValue.textContent = rotationSpeed.toFixed(0) + '°/s';
+
+            rotationFlux = settings.rotationFlux / 100;
+            rotationFluxSlider.value = settings.rotationFlux;
+            rotationFluxValue.textContent = Math.round(settings.rotationFlux) + '%';
+
+            currentPattern = settings.currentPattern;
+            patternButtons.forEach(b => b.classList.remove('active'));
+            document.querySelector(`[data-pattern="${currentPattern}"]`).classList.add('active');
+
+            rotationFlipped = settings.rotationFlipped;
+            if (rotationFlipped) {
+                rotationFlipBtn.classList.add('active');
+                rotationFlipBtn.textContent = 'Fast Contract';
+            } else {
+                rotationFlipBtn.classList.remove('active');
+                rotationFlipBtn.textContent = 'Fast Expand';
+            }
+        }
+
+        function savePreset() {
+            const name = presetNameInput.value.trim();
+            if (!name) {
+                alert('Please enter a preset name');
+                return;
+            }
+
+            const presets = JSON.parse(localStorage.getItem('breathingPresets') || '[]');
+            const settings = getCurrentSettings();
+            
+            const existingIndex = presets.findIndex(p => p.name === name);
+            if (existingIndex >= 0) {
+                if (!confirm(`Preset "${name}" already exists. Overwrite?`)) return;
+                presets[existingIndex] = { name, settings };
+            } else {
+                presets.push({ name, settings });
+            }
+
+            localStorage.setItem('breathingPresets', JSON.stringify(presets));
+            presetNameInput.value = '';
+            displayPresets();
+        }
+
+        function displayPresets() {
+            const presets = JSON.parse(localStorage.getItem('breathingPresets') || '[]');
+            presetList.innerHTML = '';
+
+            presets.forEach((preset, index) => {
+                const item = document.createElement('div');
+                item.className = 'preset-item';
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'preset-item-name';
+                nameSpan.textContent = preset.name;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'preset-delete-btn';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deletePreset(index);
+                };
+
+                item.appendChild(nameSpan);
+                item.appendChild(deleteBtn);
+                
+                item.onclick = () => loadSettings(preset.settings);
+                
+                presetList.appendChild(item);
+            });
+        }
+
+        function deletePreset(index) {
+            const presets = JSON.parse(localStorage.getItem('breathingPresets') || '[]');
+            presets.splice(index, 1);
+            localStorage.setItem('breathingPresets', JSON.stringify(presets));
+            displayPresets();
+        }
+
+        function exportToCSV() {
+            const presets = JSON.parse(localStorage.getItem('breathingPresets') || '[]');
+            if (presets.length === 0) {
+                alert('No presets to export');
+                return;
+            }
+
+            const headers = ['name', 'breathingPeriod', 'numLines', 'lineThickness', 'breathingDepth', 'rotationSpeed', 'rotationFlux', 'currentPattern', 'rotationFlipped'];
+            const rows = presets.map(p => [
+                p.name,
+                p.settings.breathingPeriod,
+                p.settings.numLines,
+                p.settings.lineThickness,
+                p.settings.breathingDepth,
+                p.settings.rotationSpeed,
+                p.settings.rotationFlux,
+                p.settings.currentPattern,
+                p.settings.rotationFlipped
+            ]);
+
+            const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'breathing-animation-presets.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importFromCSV(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const text = e.target.result;
+                    const lines = text.split('\n').filter(l => l.trim());
+                    const headers = lines[0].split(',');
+                    
+                    const presets = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(',');
+                        const preset = {
+                            name: values[0],
+                            settings: {
+                                breathingPeriod: parseFloat(values[1]),
+                                numLines: parseInt(values[2]),
+                                lineThickness: parseFloat(values[3]),
+                                breathingDepth: parseFloat(values[4]),
+                                rotationSpeed: parseFloat(values[5]),
+                                rotationFlux: parseFloat(values[6]),
+                                currentPattern: values[7],
+                                rotationFlipped: values[8] === 'true'
+                            }
+                        };
+                        presets.push(preset);
+                    }
+
+                    localStorage.setItem('breathingPresets', JSON.stringify(presets));
+                    displayPresets();
+                    alert(`Imported ${presets.length} presets`);
+                } catch (error) {
+                    alert('Error importing CSV: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        savePresetBtn.addEventListener('click', savePreset);
+        presetNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') savePreset();
+        });
+
+        exportCsvBtn.addEventListener('click', exportToCSV);
+        importCsvBtn.addEventListener('click', () => csvFileInput.click());
+        csvFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                importFromCSV(e.target.files[0]);
+                e.target.value = '';
+            }
+        });
+
+        displayPresets();
+
+        function getBreatheCycle(timestamp) {
+            const t = timestamp * 0.001 * (2 * Math.PI / breathingPeriod);
+            
+            switch(currentPattern) {
+                case 'sine':
+                    return (Math.sin(t) + 1) / 2;
+                case 'pulse':
+                    const pulse = Math.sin(t);
+                    return pulse > 0 ? 1 : 0;
+                case 'easeInOut':
+                    const cycle = (Math.sin(t) + 1) / 2;
+                    return cycle < 0.5 
+                        ? 2 * cycle * cycle 
+                        : 1 - Math.pow(-2 * cycle + 2, 2) / 2;
+                case 'sharp':
+                    return Math.abs(Math.sin(t));
+                default:
+                    return (Math.sin(t) + 1) / 2;
+            }
+        }
+
+        let accumulatedRotation = 0;
+        let lastTimestamp = 0;
+
+        function draw(timestamp) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (lastTimestamp === 0) lastTimestamp = timestamp;
+            const deltaTime = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+
+            const breatheCycle = getBreatheCycle(timestamp);
+            const minStartRadius = maxStartRadius - breathingDepth;
+            const startRadius = minStartRadius + breathingDepth * breatheCycle;
+            
+            const baseMultiplier = 1.0;
+            const variation = rotationFlux * (rotationFlipped ? (0.5 - breatheCycle) : (breatheCycle - 0.5));
+            const cycleMultiplier = baseMultiplier + variation;
+            const dynamicRotationSpeed = rotationSpeed * cycleMultiplier;
+            accumulatedRotation += deltaTime * 0.001 * dynamicRotationSpeed * Math.PI / 180;
+
+            for (let i = 0; i < numLines; i++) {
+                const angle = (i / numLines) * Math.PI * 2 - Math.PI / 2 + accumulatedRotation;
+                
+                const startX = centerX() + Math.cos(angle) * startRadius;
+                const startY = centerY() + Math.sin(angle) * startRadius;
+                const endX = centerX() + Math.cos(angle) * outerRadius;
+                const endY = centerY() + Math.sin(angle) * outerRadius;
+
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.lineWidth = lineThickness + breatheCycle * (lineThickness * 0.5);
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        requestAnimationFrame(draw);
+    </script>
+</body>
+</html>
